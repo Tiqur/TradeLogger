@@ -6,6 +6,7 @@ import (
   "os"
   "os/exec"
   "fmt"
+  "strconv"
 )
 
 type TradeLog struct {
@@ -48,18 +49,78 @@ func completer(d prompt.Document) []prompt.Suggest {
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }
 
+func ShortPrompt(prefix string) string {
+    return prompt.Input(prefix, func(d prompt.Document) []prompt.Suggest {return prompt.FilterHasPrefix([]prompt.Suggest{}, d.GetWordBeforeCursor(), true)})
+}
+
 func executor(s string) {
 
   switch s {
   case "create":
+    var string = ""
+
+    PositionType:
+    string = prompt.Input("Position Type: ", func(d prompt.Document) []prompt.Suggest {return prompt.FilterHasPrefix([]prompt.Suggest{
+      {Text: "long", Description: "Long position"},
+      {Text: "short", Description: "Short position"},
+    }, d.GetWordBeforeCursor(), true)})
+    if string != "long" && string != "short" {
+      fmt.Println("Invalid position type ( please type \"long\" or \"short\" )")
+      goto PositionType
+    }
+    var position_type = string == "long"
+
+    EntryTime:
+    string = ShortPrompt("Entry Time: ")
+    entry_time, err := strconv.ParseUint(string, 10, 64)
+    if err != nil {
+      fmt.Println("Invalid entry time. Please input an unsigned integer")
+      goto EntryTime
+    }
+
+    ExitTime:
+    string = ShortPrompt("Exit Time: ")
+    exit_time, err := strconv.ParseUint(string, 10, 64)
+    if err != nil {
+      fmt.Println("Invalid exit time. Please input an unsigned integer")
+      goto ExitTime
+    }
+
+    EntryPrice:
+    string = ShortPrompt("Entry Price: ")
+    entry_price, err := strconv.ParseFloat(string, 32)
+    if err != nil {
+      fmt.Println("Invalid entry price. Please input a float")
+      goto EntryPrice
+    }
+
+    ExitPrice:
+    string = ShortPrompt("Exit Price: ")
+    exit_price, err := strconv.ParseFloat(string, 32)
+    if err != nil {
+      fmt.Println("Invalid exit price. Please input a float")
+      goto ExitPrice
+    }
+
+    // Entry Reason
+    var entry_reason = ShortPrompt("Entry Reason: ")
+
+    // Exit Reason
+    var exit_reason = ShortPrompt("Exit Reason: ")
+
+    // Post Analysis
+    var post_analysis = ShortPrompt("Post Analysis: ")
+
     // Create new Trade Log
     var new_log = TradeLog{
-      EntryTime:  289012890490,
-      ExitTime:   349208902840,
-      EntryPrice: 23121.23,
-      ExitPrice:  25921.97,
-      EntryReason: "Some entry reason",
-      ExitReason: "Some exit reason",
+      PositionType:  position_type,
+      EntryTime:  entry_time,
+      ExitTime:   exit_time,
+      EntryPrice: float32(entry_price),
+      ExitPrice:  float32(exit_price),
+      EntryReason: entry_reason,
+      ExitReason: exit_reason,
+      PostAnalysis: post_analysis,
     }
 
     logs = append(logs, new_log)
